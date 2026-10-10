@@ -8,15 +8,26 @@ fi
 password=${VNC_PASSWORD:-}
 if [[ -n ${VNC_PASSWORD_FILE:-} ]]; then
     password=$(cat "$VNC_PASSWORD_FILE")
+    if [[ -z $password ]]; then
+        echo 'VNC_PASSWORD_FILE must contain a password.' >&2
+        exit 1
+    fi
 fi
-if (( ${#password} < 6 || ${#password} > 8 )); then
-    echo 'Set VNC_PASSWORD or VNC_PASSWORD_FILE to a 6–8 character password (VNC uses only 8 characters).' >&2
+if [[ -n $password ]] && (( ${#password} < 6 || ${#password} > 8 )); then
+    echo 'VNC passwords must contain 6–8 characters (VNC uses only 8 characters).' >&2
     exit 1
 fi
 export XDG_RUNTIME_DIR=/tmp/runtime-desktop
 mkdir -p "$XDG_RUNTIME_DIR" "$HOME/.config/tigervnc"
 chmod 700 "$XDG_RUNTIME_DIR"
-printf '%s\n' "$password" | tigervncpasswd -f > "$HOME/.config/tigervnc/passwd"
+security_args=(-SecurityTypes None)
+if [[ -n $password ]]; then
+    printf '%s\n' "$password" | tigervncpasswd -f > "$HOME/.config/tigervnc/passwd"
+    security_args=(-SecurityTypes VncAuth -PasswordFile "$HOME/.config/tigervnc/passwd")
+else
+    rm -f "$HOME/.config/tigervnc/passwd"
+    echo 'VNC authentication is disabled because no password was provided.'
+fi
 unset password VNC_PASSWORD
 cleanup() {
     kill "${web_pid:-}" "${session_pid:-}" "${vnc_pid:-}" 2>/dev/null || true
@@ -26,7 +37,7 @@ trap cleanup EXIT
 trap 'exit 0' TERM INT
 Xtigervnc :1 -geometry "$DESKTOP_RESOLUTION" -depth 24 -localhost yes \
     -nolisten tcp \
-    -SecurityTypes VncAuth -PasswordFile "$HOME/.config/tigervnc/passwd" \
+    "${security_args[@]}" \
     -AlwaysShared -rfbport 5901 &
 vnc_pid=$!
 for attempt in {1..60}; do
