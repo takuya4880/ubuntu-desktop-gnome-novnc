@@ -1,0 +1,15 @@
+services:
+  desktop:
+    build: .
+    image: takuya4880/ubuntu-desktop-gnome-novnc:latest
+    ports:
+      - "127.0.0.1:6080:6080"
+    shm_size: 1gb
+    environment:
+      VNC_PASSWORD_FILE: /run/secrets/vnc_password
+      DESKTOP_RESOLUTION: 1280x800
+    secrets:
+      - vnc_password
+secrets:
+  vnc_password:
+    file: ./.secrets/vnc_password.txt
