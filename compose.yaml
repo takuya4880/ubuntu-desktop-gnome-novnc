@@ -6,4 +6,4 @@ services:
       - "127.0.0.1:6080:6080"
     shm_size: 1gb
     environment:
-      DESKTOP_RESOLUTION: 1280x800
+      DESKTOP_RESOLUTION: 1920x1080

@@ -3,14 +3,42 @@
 A browser-accessible desktop based on `ubuntu:resolute` (Ubuntu 26.04), with
 `gnome-core`, GNOME Flashback, TigerVNC, and noVNC installed.
 The desktop session is **GNOME Flashback (Metacity / X11)**. This image does
-not run a Wayland GNOME Shell session. Docker and Docker Compose are required.
+not run a Wayland GNOME Shell session. Docker is required; Docker Compose is optional.
 The publication workflow targets `linux/amd64`.
 Flashback components start directly under a private D-Bus session, without
 systemd or a login manager. System-level desktop features such as power
 management and the usual GNOME logout workflow are not provided; use Docker
 to stop the desktop.
 
-## Run locally
+## Quick start with docker run
+
+```bash
+docker pull takuya4880/ubuntu-desktop-gnome-novnc:latest
+docker run -d \
+  --name gnome-desktop \
+  -p 127.0.0.1:6080:6080 \
+  --shm-size=1g \
+  takuya4880/ubuntu-desktop-gnome-novnc:latest
+```
+
+Open `http://localhost:6080/` in your browser and select Connect. The default
+resolution is **Full HD (1920×1080)**, and no password is required.
+To set another resolution, add `-e DESKTOP_RESOLUTION=1280x720` before the image
+name. To enable password authentication, follow the section below.
+The port binding allows access only from the Docker host.
+
+Stop and remove the container with:
+
+```bash
+docker stop gnome-desktop
+docker rm gnome-desktop
+```
+
+Removing the container also removes files saved inside its home directory.
+After pulling a newer image, recreate the container with the same run command;
+restarting an existing container does not update its image or default resolution.
+
+## Build locally and use Docker Compose
 
 ```bash
 docker build -t takuya4880/ubuntu-desktop-gnome-novnc:latest .
@@ -63,7 +91,7 @@ docker run -d --name gnome-desktop --shm-size=1g \
 unset VNC_PASSWORD
 ```
 
-Set `DESKTOP_RESOLUTION` to change the screen size (default: `1280x800`).
+Set `DESKTOP_RESOLUTION` to change the screen size (default: `1920x1080`).
 TigerVNC listens exclusively on localhost:5901 inside the container, and the
 desktop runs as a non-root user. noVNC serves HTTP; use an HTTPS reverse proxy
 with access authentication for remote access, especially in passwordless mode.
@@ -93,6 +121,10 @@ Secrets → New repository secret** and create these repository secrets:
 
 A push to `main`, a `v*` tag push, or a manual workflow run builds and smoke-tests
 the image before publishing to `takuya4880/ubuntu-desktop-gnome-novnc`.
+Successful publications from `main` also synchronize this README to the
+Docker Hub repository overview. Updating the overview requires the token to
+have the permissions required by Docker Hub for repository metadata updates
+(the description action documents a read/write/delete Personal Access Token).
 Pull requests build and test without publishing.
 The default branch produces `latest`, tag pushes produce the tag name, and
 all publications include a `sha-*` tag. Set the repository's default branch

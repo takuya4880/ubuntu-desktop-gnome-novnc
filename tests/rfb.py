@@ -68,8 +68,8 @@ else:
     send(b'\x01')  # Shared ClientInit.
     server = read(24)
     width, height = struct.unpack('!HH', server[:4])
-    assert (width, height) == (1280, 800), (width, height)
+    assert (width, height) == (1920, 1080), (width, height)
     name_length = struct.unpack('!I', server[20:24])[0]
     assert read(name_length), 'Missing desktop name'
-    print('WebSocket/RFB: connected without a password, desktop 1280x800')
+    print('WebSocket/RFB: connected without a password, desktop 1920x1080')
 s.close()
